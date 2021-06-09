@@ -1,4 +1,4 @@
-package sugarkane
+package logos
 
 import (
 	"fmt"

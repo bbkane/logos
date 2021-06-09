@@ -1,4 +1,4 @@
-module github.com/bbkane/sugarkane
+module github.com/bbkane/logos
 
 go 1.16
 
