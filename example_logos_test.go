@@ -1,8 +1,6 @@
 package logos_test
 
 import (
-	"os"
-
 	"github.com/bbkane/logos"
 	"go.uber.org/zap"
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
@@ -10,17 +8,23 @@ import (
 
 // https://blog.golang.org/examples
 func Example() {
-	// intialize a more useful lumberjack.Logger with:
-	//   https://github.com/natefinch/lumberjack
-	var lumberjackLogger *lumberjack.Logger = nil
-	sk := logos.NewLogger(lumberjackLogger, os.Stderr, os.Stdout, zap.DebugLevel, "v1.0.0")
+	// See https://github.com/natefinch/lumberjack for more options
+	var lumberjackLogger *lumberjack.Logger = &lumberjack.Logger{
+		Filename: "/tmp/testlog.jsonl",
+		MaxSize:  1, // megabytes
+	}
+	sk := logos.NewLogger(
+		logos.NewZapSugaredLogger(lumberjackLogger, zap.DebugLevel, "v1.0.0"),
+	)
 	defer sk.Sync()
 	sk.LogOnPanic()
 	sk.Infow(
 		"Now we're logging :)",
 		"key", "value",
+		"otherkey", "othervalue",
 	)
 	// Output:
 	// INFO: Now we're logging :)
 	//   key: "value"
+	//   otherkey: "othervalue"
 }

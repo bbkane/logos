@@ -40,22 +40,28 @@ func printw(fp *os.File, level string, msg string, keysAndValues ...interface{})
 // It should really only be used with simple key/value pairs
 // It's designed to be fairly easily swappable with the sugared logger
 type Logger struct {
-	errorStream *os.File
-	infoStream  *os.File
-	logger      *zap.Logger
-	sugar       *zap.SugaredLogger
+	logger *zap.Logger
+	sugar  *zap.SugaredLogger
 }
 
 // Infow prints a message and keys and values with INFO level
 func (l *Logger) Infow(msg string, keysAndValues ...interface{}) {
 	l.sugar.Infow(msg, keysAndValues...)
-	printw(l.infoStream, "INFO", msg, keysAndValues...)
+	printw(os.Stdout, "INFO", msg, keysAndValues...)
+}
+
+func Infow(msg string, keysAndValues ...interface{}) {
+	printw(os.Stdout, "INFO", msg, keysAndValues...)
 }
 
 // Errorw prints a message and keys and values with INFO level
 func (l *Logger) Errorw(msg string, keysAndValues ...interface{}) {
 	l.sugar.Errorw(msg, keysAndValues...)
-	printw(l.errorStream, "ERROR", msg, keysAndValues...)
+	printw(os.Stderr, "ERROR", msg, keysAndValues...)
+}
+
+func Errorw(msg string, keysAndValues ...interface{}) {
+	printw(os.Stderr, "ERROR", msg, keysAndValues...)
 }
 
 // Debugw prints keys and values only to the log, not to the user
@@ -84,21 +90,20 @@ func (l *Logger) LogOnPanic() {
 	}
 }
 
-// NewLogger creates a new Logger all ready to go
-func NewLogger(lumberjackLogger *lumberjack.Logger, errorStream *os.File, infoStream *os.File, lvl zapcore.LevelEnabler, appVersion string) *Logger {
-	logger := newLogger(lumberjackLogger, lvl, appVersion)
+// NewLogger builds a new Logger
+func NewLogger(zapLogger *zap.Logger) *Logger {
 	return &Logger{
-		errorStream: errorStream,
-		infoStream:  infoStream,
-		logger:      logger,
-		sugar:       logger.WithOptions(zap.AddCallerSkip(1)).Sugar(),
+		// logger is useful for syncs and panics
+		logger: zapLogger,
+		// sugar is a wrapper to call the things we actually care about :)
+		sugar: zapLogger.WithOptions(zap.AddCallerSkip(1)).Sugar(),
 	}
 }
 
-// newLogger builds a logger configured how I like it. If
-// lumberjackLogger is null, it returns a no-op logger (useful if I
-// don't want logs)
-func newLogger(lumberjackLogger *lumberjack.Logger, lvl zapcore.LevelEnabler, appVersion string) *zap.Logger {
+// NewZapSugaredLogger builds a zap.SugaredLogger configured with settings I like
+// If lumberjackLogger == nil, then it returns an No-op logger,
+// which can be useful when you want to use the library, but not have a log file
+func NewZapSugaredLogger(lumberjackLogger *lumberjack.Logger, lvl zapcore.LevelEnabler, appVersion string) *zap.Logger {
 	if lumberjackLogger == nil {
 		return zap.NewNop()
 	}
