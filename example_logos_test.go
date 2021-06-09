@@ -13,7 +13,7 @@ func Example() {
 	// intialize a more useful lumberjack.Logger with:
 	//   https://github.com/natefinch/lumberjack
 	var lumberjackLogger *lumberjack.Logger = nil
-	sk := logos.NewSugarKane(lumberjackLogger, os.Stderr, os.Stdout, zap.DebugLevel, "v1.0.0")
+	sk := logos.NewLogger(lumberjackLogger, os.Stderr, os.Stdout, zap.DebugLevel, "v1.0.0")
 	defer sk.Sync()
 	sk.LogOnPanic()
 	sk.Infow(

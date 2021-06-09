@@ -9,45 +9,10 @@ import (
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
 
-// SugarKane is a very opinionated wrapper around a uber/zap sugared logger
-// It's designed primarily to simultaneously print "pretty-enough" input for a
-// user and useful enough info to a lumberjack logger
-// It should really only be used with simple key/value pairs
-// It's designed to be fairly easily swappable with the sugared logger
-type SugarKane struct {
-	errorStream *os.File
-	infoStream  *os.File
-	logger      *zap.Logger
-	sugar       *zap.SugaredLogger
-}
-
-// Infow prints a message and keys and values with INFO level
-func (s *SugarKane) Infow(msg string, keysAndValues ...interface{}) {
-	s.sugar.Infow(msg, keysAndValues...)
-	msg = "INFO: " + msg
-	Printw(os.Stdout, msg, keysAndValues...)
-}
-
-// Errorw prints a message and keys and values with INFO level
-func (s *SugarKane) Errorw(msg string, keysAndValues ...interface{}) {
-	s.sugar.Errorw(msg, keysAndValues...)
-	msg = "ERROR: " + msg
-	Printw(os.Stderr, msg, keysAndValues...)
-}
-
-// Debugw prints keys and values only to the log, not to the user
-func (s *SugarKane) Debugw(msg string, keysAndValues ...interface{}) {
-	s.sugar.Debugw(msg, keysAndValues...)
-}
-
-// Sync syncs the underlying logger
-func (s *SugarKane) Sync() error {
-	return s.logger.Sync()
-}
-
-// Printw formats and prints a msg and keys and values to a stream.
+// printw formats and prints a msg and keys and values to a stream.
 // Useful when you need to show info but you don't have a log
-func Printw(fp *os.File, msg string, keysAndValues ...interface{}) {
+func printw(fp *os.File, level string, msg string, keysAndValues ...interface{}) {
+	msg = level + ": " + msg
 	length := len(keysAndValues)
 	if length%2 != 0 {
 		panic(fmt.Sprintf("len() not even - keysAndValues: %#v\n", keysAndValues))
@@ -69,16 +34,65 @@ func Printw(fp *os.File, msg string, keysAndValues ...interface{}) {
 	fmt.Fprintf(fp, fmtStr, values...)
 }
 
-// NewSugarKane creates a new SugarKane all ready to go
-func NewSugarKane(lumberjackLogger *lumberjack.Logger, errorStream *os.File, infoStream *os.File, lvl zapcore.LevelEnabler, appVersion string) *SugarKane {
+// Logger is a very opinionated wrapper around a uber/zap sugared logger
+// It's designed primarily to simultaneously print "pretty-enough" input for a
+// user and useful enough info to a lumberjack logger
+// It should really only be used with simple key/value pairs
+// It's designed to be fairly easily swappable with the sugared logger
+type Logger struct {
+	errorStream *os.File
+	infoStream  *os.File
+	logger      *zap.Logger
+	sugar       *zap.SugaredLogger
+}
+
+// Infow prints a message and keys and values with INFO level
+func (l *Logger) Infow(msg string, keysAndValues ...interface{}) {
+	l.sugar.Infow(msg, keysAndValues...)
+	printw(l.infoStream, "INFO", msg, keysAndValues...)
+}
+
+// Errorw prints a message and keys and values with INFO level
+func (l *Logger) Errorw(msg string, keysAndValues ...interface{}) {
+	l.sugar.Errorw(msg, keysAndValues...)
+	printw(l.errorStream, "ERROR", msg, keysAndValues...)
+}
+
+// Debugw prints keys and values only to the log, not to the user
+func (l *Logger) Debugw(msg string, keysAndValues ...interface{}) {
+	l.sugar.Debugw(msg, keysAndValues...)
+}
+
+// Sync syncs the underlying logger
+func (l *Logger) Sync() error {
+	return l.logger.Sync()
+}
+
+// LogOnPanic tries to log a panic. It should be called at the start of each
+// goroutine. See panic and recover docs
+func (l *Logger) LogOnPanic() {
+	stackTraceSugar := l.logger.
+		WithOptions(
+			zap.AddStacktrace(zap.PanicLevel),
+		).
+		Sugar()
+	if err := recover(); err != nil {
+		stackTraceSugar.Panicw(
+			"panic found!",
+			"err", err,
+		)
+	}
+}
+
+// NewLogger creates a new Logger all ready to go
+func NewLogger(lumberjackLogger *lumberjack.Logger, errorStream *os.File, infoStream *os.File, lvl zapcore.LevelEnabler, appVersion string) *Logger {
 	logger := newLogger(lumberjackLogger, lvl, appVersion)
-	return &SugarKane{
+	return &Logger{
 		errorStream: errorStream,
 		infoStream:  infoStream,
 		logger:      logger,
 		sugar:       logger.WithOptions(zap.AddCallerSkip(1)).Sugar(),
 	}
-
 }
 
 // newLogger builds a logger configured how I like it. If
@@ -123,20 +137,4 @@ func newLogger(lumberjackLogger *lumberjack.Logger, lvl zapcore.LevelEnabler, ap
 		customCommonFields,
 	)
 	return logger
-}
-
-// LogOnPanic tries to log a panic. It should be called at the start of each
-// goroutine. See panic and recover docs
-func (s *SugarKane) LogOnPanic() {
-	stackTraceSugar := s.logger.
-		WithOptions(
-			zap.AddStacktrace(zap.PanicLevel),
-		).
-		Sugar()
-	if err := recover(); err != nil {
-		stackTraceSugar.Panicw(
-			"panic found!",
-			"err", err,
-		)
-	}
 }
