@@ -13,12 +13,12 @@ func Example() {
 		Filename: "/tmp/testlog.jsonl",
 		MaxSize:  1, // megabytes
 	}
-	sk := logos.NewLogger(
+	l := logos.NewLogger(
 		logos.NewZapSugaredLogger(lumberjackLogger, zap.DebugLevel, "v1.0.0"),
 	)
-	defer sk.Sync()
-	sk.LogOnPanic()
-	sk.Infow(
+	defer l.Sync()
+	l.LogOnPanic()
+	l.Infow(
 		"Now we're logging :)",
 		"key", "value",
 		"otherkey", "othervalue",

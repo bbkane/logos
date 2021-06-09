@@ -8,7 +8,19 @@ logos is a small and super-opinionated wrapper around [`go.uber.org/zap`](https:
 - give auditors structured logs to analyze
 - give developers convenient functions to call both
 
-With default settings, logos user output looks like:
+## Effects
+
+A call to a `logos.Logger` looks like:
+
+```go
+l.Infow(
+    "Now we're logging :)",
+    "key", "value",
+    "otherkey", "othervalue",
+)
+```
+
+This produces a `stdout` output of:
 
 ```
 INFO: Now we're logging :)
@@ -17,7 +29,7 @@ INFO: Now we're logging :)
 ```
 
 Assuming `NewZapSugaredLogger` is used to create the logger,
-the same `logger.Infow` looks like the following in the log.
+this `logger.Infow` call produces this log line:
 
 ```
 {"_level":"INFO","_timestamp":"2021-06-08T22:16:29.161-0700","_caller":"logos/example_logos_test.go:21","_function":"github.com/bbkane/logos_test.Example","_msg":"Now we're logging :)","_pid":49721,"_version":"v1.0.0","key":"value","otherkey":"othervalue"}
