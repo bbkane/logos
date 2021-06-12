@@ -71,7 +71,11 @@ In addition, logos offers `Logger.Sync` to sync the logs and `Logger.LogOnPanic`
 
 ## Analyzing JSON Logs
 
-TODO
+https://unix.stackexchange.com/a/638984/185953
+
+$ cat ~/.config/grabbit.jsonl| jsonl_to.py -f csv | sqlite3 ~/tmp.db '.import --csv /dev/stdin data'
+
+$ cat ~/.config/grabbit.jsonl| jq 'select(._level == "ERROR")'
 
 ## History
 
