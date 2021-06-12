@@ -45,7 +45,7 @@ logos *might* be useful for small CLI apps that need logs
 
 logos *won't* be useful for performance sensitive apps (no attention paid to allocation, unbuffered prints), apps designed to produce output for piping to another command, or apps producing deeply nested logs.
 
-logos is imported by [these open-source packages](https://pkg.go.dev/github.com/bbkane/sugarkane?tab=importedby).
+logos is imported by [these open-source packages](https://pkg.go.dev/github.com/bbkane/logos?tab=importedby).
 
 ## Philosophy
 
@@ -55,7 +55,7 @@ logos is imported by [these open-source packages](https://pkg.go.dev/github.com/
 - `ERROR` for problems
 - `INFO` for other information
 
-Correspondingly, it offers the following functions and destinations for their content:
+Correspondingly, logos offers the following functions and destinations for their content:
 
 |                 | stderr | stdout | logfile |
 | --------------- | :----: | :----: | :-----: |
