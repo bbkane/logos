@@ -8,7 +8,7 @@ logos is a small and super-opinionated wrapper around [`go.uber.org/zap`](https:
 - give auditors structured logs to analyze
 - give developers convenient functions to call both
 
-## Effects
+## Usage
 
 A call to a `logos.Logger` looks like:
 
@@ -31,21 +31,21 @@ INFO: Now we're logging :)
 Assuming `NewZapSugaredLogger` is used to create the logger,
 this `logger.Infow` call produces this log line:
 
-```
+```json
 {"_level":"INFO","_timestamp":"2021-06-08T22:16:29.161-0700","_caller":"logos/example_logos_test.go:21","_function":"github.com/bbkane/logos_test.Example","_msg":"Now we're logging :)","_pid":49721,"_version":"v1.0.0","key":"value","otherkey":"othervalue"}
 ```
 
 Note that logos can wrap any `zap.Logger`, the provided `NewZapSugaredLogger` is only a convenience function.
 
-## Use
+See the [pkg.go.dev docs](https://pkg.go.dev/github.com/bbkane/logos) for the exact API and example usage.
+
+## When to use
 
 logos *might* be useful for small CLI apps that need logs
 
 logos *won't* be useful for performance sensitive apps (no attention paid to allocation, unbuffered prints), apps designed to produce output for piping to another command, or apps producing deeply nested logs.
 
-logos is imported by [these packages](https://pkg.go.dev/github.com/bbkane/sugarkane?tab=importedby).
-
-See the [pkg.go.dev docs](https://pkg.go.dev/github.com/bbkane/logos) for the exact API and example usage.
+logos is imported by [these open-source packages](https://pkg.go.dev/github.com/bbkane/sugarkane?tab=importedby).
 
 ## Philosophy
 
@@ -57,13 +57,13 @@ See the [pkg.go.dev docs](https://pkg.go.dev/github.com/bbkane/logos) for the ex
 
 Correspondingly, it offers the following functions and destinations for their content:
 
-|               | stderr | stdout | logfile |
-| ------------- | :----: | :----: | :-----: |
-| Errorw        |   x    |        |         |
-| Infow         |        |   x    |         |
-| Logger.Debugw |        |        |    x    |
-| Logger.Errorw |   x    |        |    x    |
-| Logger.Infow  |        |   x    |    x    |
+|                 | stderr | stdout | logfile |
+| --------------- | :----: | :----: | :-----: |
+| `Errorw`        |   x    |        |         |
+| `Infow`         |        |   x    |         |
+| `Logger.Debugw` |        |        |    x    |
+| `Logger.Errorw` |   x    |        |    x    |
+| `Logger.Infow`  |        |   x    |    x    |
 
 The logger functions are a subset of `zap.SugaredLogger` so if your app gets too large, you can do a bit of work and swap them.
 
