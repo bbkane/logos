@@ -1,4 +1,4 @@
-module github.com/bbkane/logos
+module go.bbkane.com/logos
 
 go 1.16
 

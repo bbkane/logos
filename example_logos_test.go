@@ -1,7 +1,7 @@
 package logos_test
 
 import (
-	"github.com/bbkane/logos"
+	"go.bbkane.com/logos"
 	"go.uber.org/zap"
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
