@@ -10,8 +10,12 @@ import (
 func Example() {
 	// See https://github.com/natefinch/lumberjack for more options
 	var lumberjackLogger *lumberjack.Logger = &lumberjack.Logger{
-		Filename: "/tmp/testlog.jsonl",
-		MaxSize:  1, // megabytes
+		Filename:   "/tmp/testlog.jsonl",
+		MaxSize:    1, // megabytes
+		MaxAge:     0,
+		MaxBackups: 0,
+		LocalTime:  true,
+		Compress:   false,
 	}
 	l := logos.NewLogger(
 		logos.NewZapSugaredLogger(lumberjackLogger, zap.DebugLevel, "v1.0.0"),

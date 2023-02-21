@@ -109,18 +109,20 @@ func NewZapSugaredLogger(lumberjackLogger *lumberjack.Logger, lvl zapcore.LevelE
 	}
 	encoderConfig := zapcore.EncoderConfig{
 		// prefix shared keys with '_' so they show up first when keys are alphabetical
-		TimeKey:        "_timestamp",
-		LevelKey:       "_level",
-		NameKey:        "_name", // TODO: what is this?
-		CallerKey:      "_caller",
-		FunctionKey:    "_function", // zapcore.OmitKey,
-		MessageKey:     "_msg",
-		StacktraceKey:  "_stacktrace",
-		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    zapcore.CapitalLevelEncoder,
-		EncodeTime:     zapcore.ISO8601TimeEncoder,
-		EncodeDuration: zapcore.StringDurationEncoder,
-		EncodeCaller:   zapcore.ShortCallerEncoder,
+		TimeKey:          "_timestamp",
+		LevelKey:         "_level",
+		NameKey:          "_name", // TODO: what is this?
+		CallerKey:        "_caller",
+		FunctionKey:      "_function", // zapcore.OmitKey,
+		MessageKey:       "_msg",
+		StacktraceKey:    "_stacktrace",
+		LineEnding:       zapcore.DefaultLineEnding,
+		EncodeLevel:      zapcore.CapitalLevelEncoder,
+		EncodeTime:       zapcore.ISO8601TimeEncoder,
+		EncodeDuration:   zapcore.StringDurationEncoder,
+		EncodeCaller:     zapcore.ShortCallerEncoder,
+		EncodeName:       nil,
+		ConsoleSeparator: "",
 	}
 
 	customCommonFields := zap.Fields(
