@@ -17,8 +17,8 @@ func Example() {
 		LocalTime:  true,
 		Compress:   false,
 	}
-	l := logos.NewLogger(
-		logos.NewZapSugaredLogger(lumberjackLogger, zap.DebugLevel, "v1.0.0"),
+	l := logos.New(
+		logos.NewBBKaneZapLogger(lumberjackLogger, zap.DebugLevel, "v1.0.0"),
 	)
 	defer l.Sync()
 	l.LogOnPanic()

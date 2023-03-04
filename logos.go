@@ -2,6 +2,7 @@ package logos
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	"go.uber.org/zap"
@@ -10,8 +11,8 @@ import (
 )
 
 // printw formats and prints a msg and keys and values to a stream.
-// Useful when you need to show info but you don't have a log
-func printw(fp *os.File, level string, msg string, keysAndValues ...interface{}) {
+// panics if keysAndValues doesn't have an even length
+func printw(w io.Writer, level string, msg string, keysAndValues ...interface{}) {
 	msg = level + ": " + msg
 	length := len(keysAndValues)
 	if length%2 != 0 {
@@ -31,7 +32,7 @@ func printw(fp *os.File, level string, msg string, keysAndValues ...interface{})
 	}
 
 	fmtStr += "\n"
-	fmt.Fprintf(fp, fmtStr, values...)
+	fmt.Fprintf(w, fmtStr, values...)
 }
 
 // Logger is a very opinionated wrapper around a uber/zap sugared logger
@@ -42,29 +43,33 @@ func printw(fp *os.File, level string, msg string, keysAndValues ...interface{})
 type Logger struct {
 	logger *zap.Logger
 	sugar  *zap.SugaredLogger
+	stderr io.Writer
+	stdout io.Writer
 }
 
-// Infow prints a message and keys and values with INFO level
+// Infow prints to stdout and the log
 func (l *Logger) Infow(msg string, keysAndValues ...interface{}) {
 	l.sugar.Infow(msg, keysAndValues...)
-	printw(os.Stdout, "INFO", msg, keysAndValues...)
+	printw(l.stdout, "INFO", msg, keysAndValues...)
 }
 
+// Infow prints to stdout
 func Infow(msg string, keysAndValues ...interface{}) {
 	printw(os.Stdout, "INFO", msg, keysAndValues...)
 }
 
-// Errorw prints a message and keys and values with INFO level
+// Errorw prints to stderr and the log
 func (l *Logger) Errorw(msg string, keysAndValues ...interface{}) {
 	l.sugar.Errorw(msg, keysAndValues...)
-	printw(os.Stderr, "ERROR", msg, keysAndValues...)
+	printw(l.stderr, "ERROR", msg, keysAndValues...)
 }
 
+// Errorw prints to stderr
 func Errorw(msg string, keysAndValues ...interface{}) {
 	printw(os.Stderr, "ERROR", msg, keysAndValues...)
 }
 
-// Debugw prints keys and values only to the log, not to the user
+// Debugw prints only to the log
 func (l *Logger) Debugw(msg string, keysAndValues ...interface{}) {
 	l.sugar.Debugw(msg, keysAndValues...)
 }
@@ -90,23 +95,82 @@ func (l *Logger) LogOnPanic() {
 	}
 }
 
-// NewLogger builds a new Logger
-func NewLogger(zapLogger *zap.Logger) *Logger {
-	return &Logger{
-		// logger is useful for syncs and panics
-		logger: zapLogger,
-		// sugar is a wrapper to call the things we actually care about :)
-		sugar: zapLogger.WithOptions(zap.AddCallerSkip(1)).Sugar(),
+// LoggerOpt allows customizations to New
+type LoggerOpt func(*Logger)
+
+// WithStderr overrides stderr for the logger
+func WithStderr(stderr io.Writer) LoggerOpt {
+	return func(l *Logger) {
+		l.stderr = stderr
 	}
 }
 
-// NewZapSugaredLogger builds a zap.SugaredLogger configured with settings I like
-// If lumberjackLogger == nil, then it returns an No-op logger,
-// which can be useful when you want to use the library, but not have a log file
-func NewZapSugaredLogger(lumberjackLogger *lumberjack.Logger, lvl zapcore.LevelEnabler, appVersion string) *zap.Logger {
-	if lumberjackLogger == nil {
-		return zap.NewNop()
+// WithStdout overrides stdout for the logger
+func WithStdout(stdout io.Writer) LoggerOpt {
+	return func(l *Logger) {
+		l.stdout = stdout
 	}
+}
+
+// NewNop returns a no-op Logger. It never writes logs or prints
+func NewNop() *Logger {
+	return New(zap.NewNop(), WithStderr(io.Discard), WithStdout(io.Discard))
+}
+
+// New builds a new Logger
+func New(logger *zap.Logger, opts ...LoggerOpt) *Logger {
+
+	l := &Logger{
+		logger: logger,
+		sugar:  logger.WithOptions(zap.AddCallerSkip(1)).Sugar(),
+		stderr: nil,
+		stdout: nil,
+	}
+	for _, opt := range opts {
+		opt(l)
+	}
+	if l.stderr == nil {
+		WithStderr(os.Stderr)(l)
+	}
+	if l.stdout == nil {
+		WithStdout(os.Stdout)(l)
+	}
+
+	return l
+}
+
+// NewDeterministicZapLogger saves only levels, names, and messages for testing purposes
+func NewDeterministicZapLogger(w io.Writer) *zap.Logger {
+	encoderConfig := zapcore.EncoderConfig{
+		// prefix shared keys with '_' so they show up first when keys are alphabetical
+		TimeKey:          zapcore.OmitKey,
+		LevelKey:         "_level",
+		NameKey:          "_name", // TODO: what is this?
+		CallerKey:        zapcore.OmitKey,
+		FunctionKey:      zapcore.OmitKey,
+		MessageKey:       "_msg",
+		StacktraceKey:    zapcore.OmitKey,
+		LineEnding:       zapcore.DefaultLineEnding,
+		EncodeLevel:      zapcore.CapitalLevelEncoder,
+		EncodeTime:       nil,
+		EncodeDuration:   zapcore.StringDurationEncoder,
+		EncodeCaller:     nil,
+		EncodeName:       nil,
+		ConsoleSeparator: "",
+	}
+	jsonCore := zapcore.NewCore(
+		zapcore.NewJSONEncoder(encoderConfig),
+		zapcore.AddSync(w),
+		zap.DebugLevel,
+	)
+	logger := zap.New(
+		jsonCore,
+	)
+	return logger
+}
+
+// NewBBKaneZapLogger builds a zap.SugaredLogger configured with settings I like
+func NewBBKaneZapLogger(lumberjackLogger *lumberjack.Logger, lvl zapcore.LevelEnabler, appVersion string) *zap.Logger {
 	encoderConfig := zapcore.EncoderConfig{
 		// prefix shared keys with '_' so they show up first when keys are alphabetical
 		TimeKey:          "_timestamp",

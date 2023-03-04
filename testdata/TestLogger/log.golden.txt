@@ -1,0 +1,3 @@
+{"_level":"DEBUG","_msg":"debug message","key":"value"}
+{"_level":"INFO","_msg":"info message","key":"value"}
+{"_level":"ERROR","_msg":"error message","key":"value"}
