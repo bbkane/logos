@@ -1,3 +1,3 @@
-INFO: info message
-  key: "value"
+[1m[92mINFO[0m: info message
+  [1mkey[0m: "value"
 

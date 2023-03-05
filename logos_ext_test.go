@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"go.bbkane.com/gocolor"
 	"go.bbkane.com/logos"
 )
 
@@ -67,11 +68,13 @@ func goldenTest(
 		require.Nil(t, err)
 
 		if !bytes.Equal(expectedBytes, actualBytes) {
-			t.Fatalf(
-				"expected != actual. See diff:\n  vimdiff %s %s\n",
+			t.Logf(
+				"%s: expected != actual. See diff:\n  vimdiff %s %s\n\n",
+				name,
 				goldenFilePath,
 				tmpFile.Name(),
 			)
+			t.Fail()
 		}
 	}
 }
@@ -93,13 +96,16 @@ func TestLogger(t *testing.T) {
 
 			zapLogger := logos.NewDeterministicZapLogger(logTmpFile)
 
-			logger := logos.New(zapLogger, logos.WithStderr(stderrTmpFile), logos.WithStdout(stdoutTmpFile))
+			color, err := gocolor.Prepare(true)
+			require.Nil(t, err)
+
+			logger := logos.New(zapLogger, color, logos.WithStderr(stderrTmpFile), logos.WithStdout(stdoutTmpFile))
 
 			logger.Debugw("debug message", "key", "value")
 			logger.Infow("info message", "key", "value")
 			logger.Errorw("error message", "key", "value")
 
-			err := logger.Sync()
+			err = logger.Sync()
 			require.Nil(t, err)
 		},
 	)

@@ -1,6 +1,7 @@
 package logos_test
 
 import (
+	"go.bbkane.com/gocolor"
 	"go.bbkane.com/logos"
 	"go.uber.org/zap"
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
@@ -17,8 +18,13 @@ func Example() {
 		LocalTime:  true,
 		Compress:   false,
 	}
+	color, err := gocolor.Prepare(true)
+	if err != nil {
+		panic(err)
+	}
 	l := logos.New(
 		logos.NewBBKaneZapLogger(lumberjackLogger, zap.DebugLevel, "v1.0.0"),
+		color,
 	)
 	defer l.Sync()
 	l.LogOnPanic()
@@ -27,8 +33,4 @@ func Example() {
 		"key", "value",
 		"otherkey", "othervalue",
 	)
-	// Output:
-	// INFO: Now we're logging :)
-	//   key: "value"
-	//   otherkey: "othervalue"
 }

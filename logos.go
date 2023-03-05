@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 
+	"go.bbkane.com/gocolor"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
@@ -12,17 +13,18 @@ import (
 
 // printw formats and prints a msg and keys and values to a stream.
 // panics if keysAndValues doesn't have an even length
-func printw(w io.Writer, level string, msg string, keysAndValues ...interface{}) {
-	msg = level + ": " + msg
+func printw(w io.Writer, color gocolor.Color, coloredLevel string, msg string, keysAndValues ...interface{}) {
 	length := len(keysAndValues)
 	if length%2 != 0 {
 		panic(fmt.Sprintf("len() not even - keysAndValues: %#v\n", keysAndValues))
 	}
 
+	msg = coloredLevel + ": " + msg
+
 	keys := make([]string, length/2)
 	values := make([]interface{}, length/2)
 	for i := 0; i < length/2; i++ {
-		keys[i] = keysAndValues[i*2].(string)
+		keys[i] = color.Add(color.Bold, keysAndValues[i*2].(string))
 		values[i] = keysAndValues[i*2+1]
 	}
 
@@ -41,6 +43,7 @@ func printw(w io.Writer, level string, msg string, keysAndValues ...interface{})
 // It should really only be used with simple key/value pairs
 // It's designed to be fairly easily swappable with the sugared logger
 type Logger struct {
+	color  gocolor.Color
 	logger *zap.Logger
 	sugar  *zap.SugaredLogger
 	stderr io.Writer
@@ -50,23 +53,15 @@ type Logger struct {
 // Infow prints to stdout and the log
 func (l *Logger) Infow(msg string, keysAndValues ...interface{}) {
 	l.sugar.Infow(msg, keysAndValues...)
-	printw(l.stdout, "INFO", msg, keysAndValues...)
-}
-
-// Infow prints to stdout
-func Infow(msg string, keysAndValues ...interface{}) {
-	printw(os.Stdout, "INFO", msg, keysAndValues...)
+	coloredLevel := l.color.Add(l.color.Bold+l.color.FgGreenBright, "INFO")
+	printw(l.stdout, l.color, coloredLevel, msg, keysAndValues...)
 }
 
 // Errorw prints to stderr and the log
 func (l *Logger) Errorw(msg string, keysAndValues ...interface{}) {
 	l.sugar.Errorw(msg, keysAndValues...)
-	printw(l.stderr, "ERROR", msg, keysAndValues...)
-}
-
-// Errorw prints to stderr
-func Errorw(msg string, keysAndValues ...interface{}) {
-	printw(os.Stderr, "ERROR", msg, keysAndValues...)
+	coloredLevel := l.color.Add(l.color.Bold+l.color.FgRedBright, "ERROR")
+	printw(l.stderr, l.color, coloredLevel, msg, keysAndValues...)
 }
 
 // Debugw prints only to the log
@@ -114,13 +109,14 @@ func WithStdout(stdout io.Writer) LoggerOpt {
 
 // NewNop returns a no-op Logger. It never writes logs or prints
 func NewNop() *Logger {
-	return New(zap.NewNop(), WithStderr(io.Discard), WithStdout(io.Discard))
+	return New(zap.NewNop(), gocolor.NewEmpty(), WithStderr(io.Discard), WithStdout(io.Discard))
 }
 
-// New builds a new Logger
-func New(logger *zap.Logger, opts ...LoggerOpt) *Logger {
+// New builds a new Logger. color should be initialized.
+func New(logger *zap.Logger, color gocolor.Color, opts ...LoggerOpt) *Logger {
 
 	l := &Logger{
+		color:  color,
 		logger: logger,
 		sugar:  logger.WithOptions(zap.AddCallerSkip(1)).Sugar(),
 		stderr: nil,
@@ -169,8 +165,12 @@ func NewDeterministicZapLogger(w io.Writer) *zap.Logger {
 	return logger
 }
 
-// NewBBKaneZapLogger builds a zap.SugaredLogger configured with settings I like
+// NewBBKaneZapLogger builds a zap.SugaredLogger configured with settings I like. As a special case,
+// if lumberjackLogger == nil, then returns zap.newNop
 func NewBBKaneZapLogger(lumberjackLogger *lumberjack.Logger, lvl zapcore.LevelEnabler, appVersion string) *zap.Logger {
+	if lumberjackLogger == nil {
+		return zap.NewNop()
+	}
 	encoderConfig := zapcore.EncoderConfig{
 		// prefix shared keys with '_' so they show up first when keys are alphabetical
 		TimeKey:          "_timestamp",
