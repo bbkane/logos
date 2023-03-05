@@ -139,20 +139,22 @@ func New(logger *zap.Logger, color gocolor.Color, opts ...LoggerOpt) *Logger {
 func NewDeterministicZapLogger(w io.Writer) *zap.Logger {
 	encoderConfig := zapcore.EncoderConfig{
 		// prefix shared keys with '_' so they show up first when keys are alphabetical
-		TimeKey:          zapcore.OmitKey,
-		LevelKey:         "_level",
-		NameKey:          "_name", // TODO: what is this?
-		CallerKey:        zapcore.OmitKey,
-		FunctionKey:      zapcore.OmitKey,
-		MessageKey:       "_msg",
-		StacktraceKey:    zapcore.OmitKey,
-		LineEnding:       zapcore.DefaultLineEnding,
-		EncodeLevel:      zapcore.CapitalLevelEncoder,
-		EncodeTime:       nil,
-		EncodeDuration:   zapcore.StringDurationEncoder,
-		EncodeCaller:     nil,
-		EncodeName:       nil,
-		ConsoleSeparator: "",
+		TimeKey:             zapcore.OmitKey,
+		LevelKey:            "_level",
+		NameKey:             "_name", // TODO: what is this?
+		CallerKey:           zapcore.OmitKey,
+		FunctionKey:         zapcore.OmitKey,
+		MessageKey:          "_msg",
+		StacktraceKey:       zapcore.OmitKey,
+		LineEnding:          zapcore.DefaultLineEnding,
+		EncodeLevel:         zapcore.CapitalLevelEncoder,
+		EncodeTime:          nil,
+		EncodeDuration:      zapcore.StringDurationEncoder,
+		EncodeCaller:        nil,
+		EncodeName:          nil,
+		ConsoleSeparator:    "",
+		SkipLineEnding:      false,
+		NewReflectedEncoder: nil,
 	}
 	jsonCore := zapcore.NewCore(
 		zapcore.NewJSONEncoder(encoderConfig),
@@ -173,20 +175,22 @@ func NewBBKaneZapLogger(lumberjackLogger *lumberjack.Logger, lvl zapcore.LevelEn
 	}
 	encoderConfig := zapcore.EncoderConfig{
 		// prefix shared keys with '_' so they show up first when keys are alphabetical
-		TimeKey:          "_timestamp",
-		LevelKey:         "_level",
-		NameKey:          "_name", // TODO: what is this?
-		CallerKey:        "_caller",
-		FunctionKey:      "_function", // zapcore.OmitKey,
-		MessageKey:       "_msg",
-		StacktraceKey:    "_stacktrace",
-		LineEnding:       zapcore.DefaultLineEnding,
-		EncodeLevel:      zapcore.CapitalLevelEncoder,
-		EncodeTime:       zapcore.ISO8601TimeEncoder,
-		EncodeDuration:   zapcore.StringDurationEncoder,
-		EncodeCaller:     zapcore.ShortCallerEncoder,
-		EncodeName:       nil,
-		ConsoleSeparator: "",
+		TimeKey:             "_timestamp",
+		LevelKey:            "_level",
+		NameKey:             "_name", // TODO: what is this?
+		CallerKey:           "_caller",
+		FunctionKey:         "_function", // zapcore.OmitKey,
+		MessageKey:          "_msg",
+		StacktraceKey:       "_stacktrace",
+		LineEnding:          zapcore.DefaultLineEnding,
+		EncodeLevel:         zapcore.CapitalLevelEncoder,
+		EncodeTime:          zapcore.ISO8601TimeEncoder,
+		EncodeDuration:      zapcore.StringDurationEncoder,
+		EncodeCaller:        zapcore.ShortCallerEncoder,
+		EncodeName:          nil,
+		ConsoleSeparator:    "",
+		SkipLineEnding:      false,
+		NewReflectedEncoder: nil,
 	}
 
 	customCommonFields := zap.Fields(
