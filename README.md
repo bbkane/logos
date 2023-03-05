@@ -8,6 +8,8 @@ logos is a small and super-opinionated wrapper around [`go.uber.org/zap`](https:
 - give auditors structured logs to analyze
 - give developers an easy way to print and log with the same function call
 
+![demo](./demo/demo.gif)
+
 ## Usage
 
 A call to a `logos.Logger` looks like:
@@ -49,7 +51,7 @@ logos is imported by [these open-source packages](https://pkg.go.dev/github.com/
 
 ## Philosophy
 
-`logos` users (i.e., the author 😃)  believe only 3 log levels are needed: 
+`logos` users (i.e., the author 😃)  believe only 3 log levels are needed:
 
 - `DEBUG` for information only needed by auditors looking at the logs
 - `ERROR` for problems
@@ -59,8 +61,6 @@ Correspondingly, logos offers the following functions and destinations for their
 
 |                 | stderr | stdout | logfile |
 | --------------- | :----: | :----: | :-----: |
-| `Errorw`        |   x    |        |         |
-| `Infow`         |        |   x    |         |
 | `Logger.Debugw` |        |        |    x    |
 | `Logger.Errorw` |   x    |        |    x    |
 | `Logger.Infow`  |        |   x    |    x    |
@@ -116,7 +116,7 @@ Of course, SQLite3 can also [import CSVs](https://unix.stackexchange.com/a/63898
 
 ```bash
 jsonl_to.py -f csv ~/.config/grabbit.jsonl \
-| sqlite3 ~/tmpgrabbitlogs.db '.import --csv /dev/stdin logs' 
+| sqlite3 ~/tmpgrabbitlogs.db '.import --csv /dev/stdin logs'
 ```
 
 ![Beekeeper Studio Results](./beekeeper_studio_results.png)
