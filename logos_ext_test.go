@@ -51,7 +51,7 @@ func goldenTest(
 		actualBytes, err := os.ReadFile(tmpFile.Name())
 		require.Nil(t, err)
 
-		goldenFilePath := filepath.Join(goldenDir, name+".golden.txt")
+		goldenFilePath := filepath.Join(goldenDir, "golden-"+name)
 		goldenFilePath, err = filepath.Abs(goldenFilePath)
 		require.Nil(t, err)
 
@@ -86,13 +86,13 @@ func TestLogger(t *testing.T) {
 	goldenTest(
 		t,
 		"logos-test",
-		[]string{"log", "stderr", "stdout"},
+		[]string{"log.jsonl", "stderr.txt", "stdout.txt"},
 		filepath.Join("testdata", t.Name()),
 		update,
 		func(files map[string]*os.File) {
-			logTmpFile := files["log"]
-			stderrTmpFile := files["stderr"]
-			stdoutTmpFile := files["stdout"]
+			logTmpFile := files["log.jsonl"]
+			stderrTmpFile := files["stderr.txt"]
+			stdoutTmpFile := files["stdout.txt"]
 
 			zapLogger := logos.NewDeterministicZapLogger(logTmpFile)
 
