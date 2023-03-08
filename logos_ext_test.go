@@ -11,7 +11,32 @@ import (
 	"go.bbkane.com/logos"
 )
 
-// goldenTest provides files to work(), then compares those files to previously
+type goldenTestParams struct {
+	// TmpFilePrefix is prepended to tmpfiles goldenTest creates as debugging convenience.
+	TmpFilePrefix string
+
+	// FileNames for goldenTest to create and work to write to. Example:
+	//	[]string{"stdout.txt", "stderr.txt"}
+	FileNames []string
+
+	// GoldenDir holds saved GoldenTeests.
+	// Example:
+	//	filepath.Join("testdata", t.Name())
+	GoldenDir string
+
+	// UpdateEnvVar is checked, and, is set to any value, will update golden files
+	UpdateEnvVar string
+
+	// WorkFunc runs the code to be tested. Workfunc should write to file handles retrieved from the passed map with values from FileNames.
+	// Example:
+	//	func(files map[string]*os.File){
+	//		f := files["stdout.txt"]
+	//		fmt.Fprint(f, "hello")
+	//	}
+	WorkFunc func(map[string]*os.File)
+}
+
+// goldenTest provides files to p.WorkFunc, then compares those files to previously
 // saved ones and provides vimdiff commands to inspect any diffences found.
 // In pseudocode for a one-file version of this function:
 //
@@ -25,25 +50,24 @@ import (
 //	}
 //	expectedBytes := Read(goldenFilePath)
 //	Compare(expectedBytes, actualBytes)
-func goldenTest(
-	t *testing.T,
-	tmpFilePrefix string,
-	names []string,
-	goldenDir string,
-	update bool,
-	work func(map[string]*os.File),
-) {
-	var tmpFiles = make(map[string]*os.File, len(names))
-	for _, name := range names {
-		file, err := os.CreateTemp(os.TempDir(), tmpFilePrefix+"-"+name)
+func goldenTest(t *testing.T, p goldenTestParams) {
+
+	update := os.Getenv(p.UpdateEnvVar) != ""
+	if !update {
+		t.Logf("To update golden files, run:\n  %s=1 go test ./...", p.UpdateEnvVar)
+	}
+
+	var tmpFiles = make(map[string]*os.File, len(p.FileNames))
+	for _, name := range p.FileNames {
+		file, err := os.CreateTemp(os.TempDir(), p.TmpFilePrefix+"-"+name)
 		require.Nil(t, err)
 		t.Logf("wrote tmpfile: %#v", file.Name())
 		tmpFiles[name] = file
 	}
 
-	work(tmpFiles)
+	p.WorkFunc(tmpFiles)
 
-	for _, name := range names {
+	for _, name := range p.FileNames {
 		tmpFile := tmpFiles[name]
 		err := tmpFile.Close()
 		require.Nil(t, err)
@@ -51,12 +75,12 @@ func goldenTest(
 		actualBytes, err := os.ReadFile(tmpFile.Name())
 		require.Nil(t, err)
 
-		goldenFilePath := filepath.Join(goldenDir, "golden-"+name)
+		goldenFilePath := filepath.Join(p.GoldenDir, "golden-"+name)
 		goldenFilePath, err = filepath.Abs(goldenFilePath)
 		require.Nil(t, err)
 
 		if update {
-			err = os.MkdirAll(goldenDir, 0700)
+			err = os.MkdirAll(p.GoldenDir, 0700)
 			require.Nil(t, err)
 
 			err = os.WriteFile(goldenFilePath, actualBytes, 0600)
@@ -77,19 +101,17 @@ func goldenTest(
 			t.Fail()
 		}
 	}
+
 }
 
 func TestLogger(t *testing.T) {
 
-	update := os.Getenv("LOGOS_TEST_UPDATE_GOLDEN") != ""
-
-	goldenTest(
-		t,
-		"logos-test",
-		[]string{"log.jsonl", "stderr.txt", "stdout.txt"},
-		filepath.Join("testdata", t.Name()),
-		update,
-		func(files map[string]*os.File) {
+	goldenTest(t, goldenTestParams{
+		TmpFilePrefix: "logos-test",
+		FileNames:     []string{"log.jsonl", "stderr.txt", "stdout.txt"},
+		GoldenDir:     filepath.Join("testdata", t.Name()),
+		UpdateEnvVar:  "LOGOS_TEST_UPDATE_GOLDEN",
+		WorkFunc: func(files map[string]*os.File) {
 			logTmpFile := files["log.jsonl"]
 			stderrTmpFile := files["stderr.txt"]
 			stdoutTmpFile := files["stdout.txt"]
@@ -108,5 +130,5 @@ func TestLogger(t *testing.T) {
 			err = logger.Sync()
 			require.Nil(t, err)
 		},
-	)
+	})
 }
