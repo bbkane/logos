@@ -22,15 +22,19 @@ func Example() {
 	if err != nil {
 		panic(err)
 	}
-	l := logos.New(
+	logger := logos.New(
 		logos.NewBBKaneZapLogger(lumberjackLogger, zap.DebugLevel, "v1.0.0"),
 		color,
 	)
-	defer l.Sync()
-	l.LogOnPanic()
-	l.Infow(
+	logger.LogOnPanic()
+	logger.Infow(
 		"Now we're logging :)",
 		"key", "value",
 		"otherkey", "othervalue",
 	)
+
+	err = logger.Sync()
+	if err != nil {
+		panic(err)
+	}
 }
