@@ -3,7 +3,7 @@ module go.bbkane.com/logos
 go 1.20
 
 require (
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.4
 	go.bbkane.com/gocolor v0.0.5
 	go.uber.org/zap v1.26.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
