@@ -22,20 +22,24 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	l := logos.New(
+	logger := logos.New(
 		logos.NewBBKaneZapLogger(lumberjackLogger, zap.DebugLevel, "v1.0.0"),
 		color,
 	)
-	defer l.Sync()
-	l.LogOnPanic()
-	l.Infow(
+	logger.LogOnPanic()
+	logger.Infow(
 		"Info message!",
 		"key", "value",
 		"otherkey", "othervalue",
 	)
-	l.Errorw(
+	logger.Errorw(
 		"Info message!",
 		"key", "value",
 		"otherkey", "othervalue",
 	)
+
+	err = logger.Sync()
+	if err != nil {
+		panic(err)
+	}
 }
