@@ -10,6 +10,10 @@ logos is a small and super-opinionated wrapper around [`go.uber.org/zap`](https:
 
 ![demo](./demo/demo.gif)
 
+## Project Status (2025-06-14)
+
+I use `logos` in `grabbit`, but I've switched to `log/slog` and OTEL traces elsewhere, and I intend to switch away from `logos` in `grabbit` as well. I think I can get a similar beautiful console output with OTEL traces as well as better offline visualization. At that point I'll archive `logos`.
+
 ## Usage
 
 A call to a `logos.Logger` looks like:
