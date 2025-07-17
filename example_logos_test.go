@@ -10,7 +10,7 @@ import (
 // https://blog.golang.org/examples
 func Example() {
 	// See https://github.com/natefinch/lumberjack for more options
-	var lumberjackLogger *lumberjack.Logger = &lumberjack.Logger{
+	lumberjackLogger := &lumberjack.Logger{
 		Filename:   "/tmp/testlog.jsonl",
 		MaxSize:    1, // megabytes
 		MaxAge:     0,
